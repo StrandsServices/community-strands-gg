@@ -255,6 +255,7 @@ try {
 						}
 
 						.content-wrapper {
+							flex: 1;
 							padding-top: calc(var(--base-padding));
 							display: flex;
 							flex-direction: column;
@@ -285,7 +286,7 @@ try {
 								padding: 1rem;
 
 								@supports (corner-shape: squircle) {
-									border-radius: 20px;
+									border-radius: 40px;
 									corner-shape: squircle;
 								}
 
@@ -311,11 +312,15 @@ try {
 								}
 							}
 
+							.spacer {
+								flex: 1;
+							}
+
 							.continue-button {
 								@apply bg-indigo-600 text-slate-100 rounded-lg;
 
 								width: 100%;
-								padding: 0.75rem 1rem;
+								padding: 1rem;
 								color: white;
 								border: none;
 								border-radius: 8px;
@@ -325,7 +330,7 @@ try {
 								transition: background 0.2s;
 
 								@supports (corner-shape: squircle) {
-									border-radius: 20px;
+									border-radius: 40px;
 									corner-shape: squircle;
 								}
 
@@ -361,19 +366,29 @@ try {
 						}
 
 						@container (width < 600px) {
+							padding: 1rem;
+
 							.server-header {
-								top: -35px;
+								position: relative;
+								top: unset;
+								margin-top: -55px;
+								width: unset;
+								inset-inline: 0;
+								flex-direction: column;
+								text-align: center;
+								margin-bottom: 1rem;
 								gap: 0.5rem;
-								inset-inline: 1rem;
 
 								.server-info {
+									text-align: center;
+									width: unset;
 									gap: 0;
 								}
-								
+
 								.server-icon {
 									width: 80px;
 									height: 80px;
-									top: -5px;
+									top: 0;
 								}
 							}
 						}
@@ -461,6 +476,8 @@ try {
 							</div>
 						</div>
 
+						<div class="spacer"></div>
+
 						<button class="continue-button" id="joinButton">
 							Continue to Discord
 						</button>
@@ -487,9 +504,12 @@ try {
 			const loadingText = document.getElementById('loadingText');
 			const discordUrl = `discord://-/invite/${DISCORD_INVITE_CODE}/login`;
 			const webUrl = `https://discord.com/invite/${DISCORD_INVITE_CODE}`;
+			const localhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 			// Auto-redirect on page load - attempts to open Discord app
 			window.addEventListener('load', () => {
+				if(localhost) return;
+
 				window.location.href = discordUrl;
 			});
 
