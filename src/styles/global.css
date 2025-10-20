@@ -40,8 +40,8 @@
 html, body {
   margin: 0;
   padding: 0;
-  block-size: 100vh;
-  inline-size: 100vw;
+  block-size: 100dvb;
+  inline-size: 100dvi;
   overflow: clip;
 }
 
