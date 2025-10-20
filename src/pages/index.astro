@@ -1,6 +1,9 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import { SITE_TITLE, SITE_DESCRIPTION, DISCORD_INVITE_CODE } from '../consts';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+
+// Access runtime environment variable from Cloudflare Worker
+const DISCORD_INVITE_CODE = Astro.locals.runtime?.env?.DISCORD_URL_CODE || import.meta.env.DISCORD_URL_CODE || "strands";
 
 // Fetch Discord invite data
 let serverName = 'Unknown Community';
