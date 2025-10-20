@@ -480,6 +480,11 @@ try {
 			const discordUrl = `discord://-/invite/${DISCORD_INVITE_CODE}/login`;
 			const webUrl = `https://discord.com/invite/${DISCORD_INVITE_CODE}`;
 
+			// Auto-redirect on page load - attempts to open Discord app
+			window.addEventListener('load', () => {
+				window.location.href = discordUrl;
+			});
+
 			// Manual button click - opens Discord app with fallback
 			joinButton.addEventListener('click', () => {
 				let blurred = false;
