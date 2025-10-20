@@ -164,9 +164,8 @@ try {
 
 						.server-header {
 							position: absolute;
-							top: -50px;
-							left: 2rem;
-							right: 2rem;
+							top: -45px;
+							inset-inline: 2rem;
 							display: flex;
 							align-items: center;
 							gap: 1rem;
@@ -176,6 +175,8 @@ try {
 
 								width: 100px;
 								height: 100px;
+								position: relative;
+								top: -5px;
 								border-radius: 50%;
 								background: #5865F2;
 								display: flex;
@@ -216,6 +217,7 @@ try {
 									}
 
 									.server-tag {
+										flex-shrink: 0;
 										display: inline-flex;
 										align-items: center;
 										gap: 0.25rem;
@@ -360,12 +362,18 @@ try {
 
 						@container (width < 600px) {
 							.server-header {
-								top: -40px;
+								top: -35px;
+								gap: 0.5rem;
+								inset-inline: 1rem;
+
+								.server-info {
+									gap: 0;
+								}
 								
 								.server-icon {
 									width: 80px;
 									height: 80px;
-									font-size: 2.5rem;
+									top: -5px;
 								}
 							}
 						}
