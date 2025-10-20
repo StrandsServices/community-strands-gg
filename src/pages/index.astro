@@ -1,50 +1,468 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { SITE_TITLE, SITE_DESCRIPTION, DISCORD_INVITE_CODE } from '../consts';
+
+// Fetch Discord invite data
+let serverName = 'Strands Community';
+let serverIcon: string = 'S';
+let isIconUrl = false;
+let onlineCount = 0;
+let memberCount = 0;
+let bannerUrl: string | null = null;
+let splashUrl: string | null = null;
+let serverDescription: string | null = null;
+let channelName: string | null = null;
+let badgeColorPrimary: string | null = null;
+let badgeColorSecondary: string | null = null;
+let tagName: string | null = null;
+let tagEmoji: string | null = null;
+let badgeUrl: string | null = null;
+let guildId: string | null = null;
+
+try {
+	const response = await fetch(
+		`https://discord.com/api/v9/invites/${DISCORD_INVITE_CODE}?with_counts=true&with_expiration=true`,
+		{
+			headers: {
+				'User-Agent': 'DiscordBot (https://strands.gg, 1.0)'
+			}
+		}
+	);
+
+	if (response.ok) {
+		const data = await response.json() as any;
+		serverName = data.guild?.name || serverName;
+		onlineCount = data.approximate_presence_count || 0;
+		memberCount = data.approximate_member_count || 0;
+		serverDescription = data.guild?.description || null;
+		channelName = data.channel?.name || null;
+		guildId = data.guild?.id || null;
+
+		// Get badge colors if available
+		badgeColorPrimary = data.profile?.badge_color_primary || null;
+		badgeColorSecondary = data.profile?.badge_color_secondary || null;
+
+		// Get tag information if available
+		tagName = data.profile?.tag || null;
+
+		// Get badge image if available
+		if (data.profile?.badge_hash) {
+			// The badge_hash needs to be decoded from its hash format
+			// Discord uses a custom hash format that needs to be converted to the badge ID
+			try {
+				// Remove any non-alphanumeric characters and decode
+				const cleanHash = data.profile.badge_hash.replace(/[^a-zA-Z0-9]/g, '');
+				// Try to decode as base64 or hex
+				let badgeId = cleanHash;
+				// badgeId = parseInt(cleanHash, 16).toString();
+				badgeUrl = `https://cdn.discordapp.com/clan-badges/${guildId}/${badgeId}.png?size=16`;
+			} catch (e) {
+				console.error('Failed to decode badge_hash:', e);
+			}
+		}
+
+		// Get server icon if available
+		if (data.guild?.icon) {
+			serverIcon = `https://cdn.discordapp.com/icons/${data.guild.id}/${data.guild.icon}.png?size=128`;
+			isIconUrl = true;
+		} else if (data.guild?.name) {
+			// Use first letter of server name as fallback
+			serverIcon = data.guild.name.charAt(0).toUpperCase();
+		}
+
+		// Get banner if available
+		if (data.guild?.banner) {
+			bannerUrl = `https://cdn.discordapp.com/banners/${data.guild.id}/${data.guild.banner}.png?size=4096`;
+		}
+
+		// Get splash if available (fallback to banner)
+		if (data.guild?.splash) {
+			splashUrl = `https://cdn.discordapp.com/splashes/${data.guild.id}/${data.guild.splash}.png?size=4096`;
+		} else if (bannerUrl) {
+			splashUrl = bannerUrl;
+		}
+	}
+} catch (error) {
+	console.error('Failed to fetch Discord invite data:', error);
+}
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" style={badgeColorPrimary && badgeColorSecondary ? `--background: linear-gradient(135deg, ${badgeColorPrimary}, ${badgeColorSecondary})` : ''}>
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		
+		<style>
+			body {
+				display: grid;
+				grid-template-columns: auto 1fr;
+				grid-template-rows: 1fr;
+				border-radius: 20px;
+				gap: 5px;
+
+				@supports (corner-shape: squircle) {
+					border-radius: 50px;
+					corner-shape: squircle;
+				}
+
+				.invite-container {
+					--_width: 620px;
+
+					@apply bg-slate-800 rounded-lg;
+					
+					container-type: inline-size;
+					width: clamp(300px, calc(100vw - (var(--base-padding) * 2)), var(--_width));
+					max-width: var(--_width);
+					text-align: center;
+					overflow: hidden;
+					display: flex;
+					flex-direction: column;
+
+					* {
+						transition: 0.2s;
+					}
+
+					.server-banner {
+						width: 100%;
+						aspect-ratio: 16 / 7;
+						object-fit: cover;
+						object-position: bottom center;
+						display: block;
+					}
+
+					.invite-content {
+						padding: 2rem;
+						display: flex;
+						flex-direction: column;
+						flex: 1;
+						position: relative;
+
+						.server-header {
+							position: absolute;
+							top: -50px;
+							left: 2rem;
+							right: 2rem;
+							display: flex;
+							align-items: center;
+							gap: 1rem;
+
+							.server-icon {
+								@apply border-4 border-slate-800;
+
+								width: 100px;
+								height: 100px;
+								border-radius: 50%;
+								background: #5865F2;
+								display: flex;
+								align-items: center;
+								justify-content: center;
+								font-size: 3rem;
+								color: white;
+								font-weight: bold;
+								overflow: hidden;
+								flex-shrink: 0;
+
+								img {
+									width: 100%;
+									height: 100%;
+									object-fit: cover;
+								}
+							}
+
+							.server-info {
+								flex: 1;
+								width: 0;
+								display: flex;
+								flex-direction: column;
+								gap: 0.25rem;
+								text-align: left;
+
+								.invite-heading {
+									@apply text-lg font-bold text-slate-100 overflow-hidden whitespace-nowrap overflow-ellipsis;
+								}
+
+								.server-name-row {
+									display: flex;
+									align-items: center;
+									gap: 0.5rem;
+
+									.server-name {
+										@apply text-2xl font-bold text-slate-100 overflow-hidden whitespace-nowrap overflow-ellipsis;
+									}
+
+									.server-tag {
+										display: inline-flex;
+										align-items: center;
+										gap: 0.25rem;
+										padding: 2px 0.5rem 2px 2px;
+										border-radius: 6px;
+										font-size: 0.75rem;
+										font-weight: 600;
+										max-width: 60px;
+										text-transform: uppercase;
+										color: var(--color-slate-100);
+										background: linear-gradient(135deg, var(--tag-primary, #5865F2), var(--tag-secondary, #4752C4));
+
+										img {
+											@apply bg-slate-100;
+
+											width: 16px;
+											height: 16px;
+											object-fit: contain;
+											padding: 2px;
+											border-radius: 4px;
+										}
+
+										@supports (corner-shape: squircle) {
+											border-radius: 12px;
+											corner-shape: squircle;
+
+											img {
+												border-radius: 8px;
+												corner-shape: squircle;
+											}
+										}
+									}
+								}
+							}
+						}
+
+						.content-wrapper {
+							padding-top: calc(var(--base-padding));
+							display: flex;
+							flex-direction: column;
+							gap: 1.5rem;
+
+							.discord {
+								@apply text-slate-300 font-semibold;
+
+								display: flex;
+								align-items: center;
+								justify-content: center;
+								gap: 1.2rem;
+								font-size: 1.5rem;
+								line-height: 1;
+
+								.discord-logo {
+									width: 200px;
+									height: auto;
+								}
+							}
+
+							.member-count {
+								@apply bg-slate-700 text-slate-100 rounded-lg;
+
+								display: flex;
+								gap: 1.5rem;
+								justify-content: center;
+								padding: 1rem;
+
+								@supports (corner-shape: squircle) {
+									border-radius: 20px;
+									corner-shape: squircle;
+								}
+
+								.member-stat {
+									display: flex;
+									align-items: center;
+									gap: 0.5rem;
+									font-size: 1.5rem;
+
+									.status-dot {
+										width: 8px;
+										height: 8px;
+										border-radius: 50%;
+
+										&.status-online {
+											@apply bg-green-500;
+										}
+
+										&.status-members {
+											@apply bg-gray-400;
+										}
+									}
+								}
+							}
+
+							.continue-button {
+								@apply bg-indigo-600 text-slate-100 rounded-lg;
+
+								width: 100%;
+								padding: 0.75rem 1rem;
+								color: white;
+								border: none;
+								border-radius: 8px;
+								font-size: 1rem;
+								font-weight: 500;
+								cursor: pointer;
+								transition: background 0.2s;
+
+								@supports (corner-shape: squircle) {
+									border-radius: 20px;
+									corner-shape: squircle;
+								}
+
+								&:hover {
+									background: #4752C4;
+								}
+							}
+
+							.loading-text {
+								display: none;
+								margin-top: 1rem;
+								color: #80848E;
+								font-size: 0.875rem;
+
+								&.show {
+									display: block;
+								}
+							}
+
+							.error-message {
+								display: none;
+								margin-top: 1rem;
+								padding: 0.75rem;
+								background: #ED4245;
+								color: white;
+								border-radius: 4px;
+								font-size: 0.875rem;
+
+								&.show {
+									display: block;
+								}
+							}
+						}
+
+						@container (width < 600px) {
+							.server-header {
+								top: -40px;
+								
+								.server-icon {
+									width: 80px;
+									height: 80px;
+									font-size: 2.5rem;
+								}
+							}
+						}
+					}
+				}
+
+				.background-image {
+					@apply bg-slate-900 rounded-lg;
+
+					background: #5865F2;
+					background-image:
+						radial-gradient(circle at 25% 25%, rgba(88, 101, 242, 0.8) 0%, transparent 50%),
+						radial-gradient(circle at 75% 75%, rgba(114, 137, 218, 0.6) 0%, transparent 50%);
+					overflow: hidden;
+
+					&.has-splash {
+						background-size: cover;
+					}
+				}
+			}
+		</style>
 	</head>
+
 	<body>
-		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to <a href="https://docs.astro.build/"
-					>read the docs
-				</a> or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out <a
-					href="https://github.com/Charca/astro-blog-template"
-					>astro-blog-template
-				</a> by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
+		<main class="invite-container">
+			{bannerUrl && (
+				<img src={bannerUrl} alt={`${serverName} banner`} class="server-banner" />
+			)}
+
+			<div class="invite-content">
+				<div class="server-header">
+					<div class="server-icon">
+						{isIconUrl ? (
+							<img src={serverIcon} alt={`${serverName} icon`} />
+						) : (
+							serverIcon
+						)}
+					</div>
+					<div class="server-info">
+						<div class="invite-heading">You've been invited to join #{channelName} in</div>
+						<div class="server-name-row" style={badgeColorPrimary && badgeColorSecondary ? `--tag-primary: ${badgeColorPrimary}; --tag-secondary: ${badgeColorSecondary}` : ''}>
+							{tagName && (
+								<div class="server-tag">
+									{badgeUrl && <img src={badgeUrl} alt="Badge" />}
+									{tagEmoji && <span>{tagEmoji}</span>}
+									<span>{tagName}</span>
+								</div>
+							)}
+							<div class="server-name">{serverName}</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="content-wrapper">
+					<div class="discord">
+						ON
+						<img src="https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/66e90ab9506850e8a5dd48e3_Discrod_MainLogo.svg" alt="Discord Logo" class="discord-logo" />
+					</div>
+
+					<div class="member-count">
+						<div class="member-stat">
+							<span class="status-dot status-online"></span>
+							<span><strong>{onlineCount.toLocaleString()}</strong> Online</span>
+						</div>
+						<div class="member-stat">
+							<span class="status-dot status-members"></span>
+							<span><strong>{memberCount.toLocaleString()}</strong> Members</span>
+						</div>
+					</div>
+
+					<button class="continue-button" id="joinButton">
+						Continue to Discord
+					</button>
+
+					<div class="loading-text" id="loadingText">
+						Opening Discord...
+					</div>
+
+					<div class="error-message" id="errorMessage">
+						Could not open Discord app. Please try again.
+					</div>
+				</div>
+			</div>
 		</main>
-		<Footer />
+
+		<div
+			class={`background-image ${splashUrl ? 'has-splash' : ''}`}
+			style={splashUrl ? `background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${splashUrl})` : ''}
+		></div>
+
+		<script is:inline define:vars={{ DISCORD_INVITE_CODE }}>
+			const joinButton = document.getElementById('joinButton');
+			const loadingText = document.getElementById('loadingText');
+			const discordUrl = `discord://-/invite/${DISCORD_INVITE_CODE}/login`;
+			const webUrl = `https://discord.com/invite/${DISCORD_INVITE_CODE}`;
+
+			// Manual button click - opens Discord app with fallback
+			joinButton.addEventListener('click', () => {
+				let blurred = false;
+
+				// Detect if the app successfully opened
+				const onBlur = () => {
+					blurred = true;
+					// Show loading text when Discord app opens
+					loadingText.classList.add('show');
+				};
+
+				window.addEventListener('blur', onBlur);
+
+				// Try to open Discord app
+				window.location.href = discordUrl;
+
+				// Check if app opened after a delay
+				setTimeout(() => {
+					window.removeEventListener('blur', onBlur);
+
+					// If the window never lost focus, the app didn't open
+					if (!blurred) {
+						window.location.href = webUrl;
+					}
+				}, 2000);
+			});
+		</script>
 	</body>
 </html>
