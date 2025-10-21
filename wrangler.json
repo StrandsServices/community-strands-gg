@@ -12,6 +12,11 @@
   },
   "upload_source_maps": true,
   "vars": {
-    "DISCORD_URL_CODE": "YYBsaWt6BH"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "DISCORD_INVITES",
+      "id": "0a2280a0d6f94ba1b1548edd17f420b1"
+    }
+  ]
 }
