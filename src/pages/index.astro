@@ -1,4 +1,7 @@
 ---
+// Disable prerendering to ensure fresh data on every request
+export const prerender = false;
+
 import BaseHead from '../components/BaseHead.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 
