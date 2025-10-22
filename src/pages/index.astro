@@ -8,7 +8,6 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 // Get Discord credentials
 const DISCORD_BOT_TOKEN = Astro.locals.runtime?.env?.DISCORD_BOT_TOKEN || import.meta.env.DISCORD_BOT_TOKEN;
 const DISCORD_GUILD_ID = Astro.locals.runtime?.env?.DISCORD_GUILD_ID || import.meta.env.DISCORD_GUILD_ID;
-const DISCORD_CHANNEL_ID = Astro.locals.runtime?.env?.DISCORD_CHANNEL_ID || import.meta.env.DISCORD_CHANNEL_ID;
 
 // Fetch Discord guild and channel data (for displaying server info)
 let serverName = 'Unknown Community';
@@ -19,7 +18,6 @@ let memberCount = 0;
 let bannerUrl: string | null = null;
 let splashUrl: string | null = null;
 let serverDescription: string | null = null;
-let channelName: string | null = null;
 let badgeColorPrimary: string | null = null;
 let badgeColorSecondary: string | null = null;
 let tagName: string | null = null;
@@ -86,24 +84,6 @@ try {
 				splashUrl = `https://cdn.discordapp.com/splashes/${guildData.id}/${guildData.splash}.png?size=4096`;
 			} else if (bannerUrl) {
 				splashUrl = bannerUrl;
-			}
-		}
-
-		// Fetch channel data
-		if (DISCORD_CHANNEL_ID) {
-			const channelResponse = await fetch(
-				`https://discord.com/api/v10/channels/${DISCORD_CHANNEL_ID}`,
-				{
-					headers: {
-						'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
-						'User-Agent': 'DiscordBot (https://strands.gg, 1.0)'
-					}
-				}
-			);
-
-			if (channelResponse.ok) {
-				const channelData = await channelResponse.json() as any;
-				channelName = channelData.name || null;
 			}
 		}
 	}
