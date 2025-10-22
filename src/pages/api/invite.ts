@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ locals, url }) => {
+export const GET: APIRoute = async ({ locals, url, request }) => {
   const runtime = locals.runtime;
   const DISCORD_BOT_TOKEN = runtime?.env?.DISCORD_BOT_TOKEN;
   const DISCORD_CHANNEL_ID = runtime?.env?.DISCORD_CHANNEL_ID;
@@ -15,7 +15,60 @@ export const GET: APIRoute = async ({ locals, url }) => {
     );
   }
 
+  // Honeypot check - bots will fill this field
+  const honeypot = url.searchParams.get('email');
+  if (honeypot) {
+    console.warn('Honeypot triggered - potential bot detected', { honeypot });
+    return new Response(
+      JSON.stringify({ error: 'Invalid request' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Check User-Agent - block obvious bots
+  const userAgent = request.headers.get('User-Agent') || '';
+  const botPatterns = [
+    /bot/i,
+    /crawler/i,
+    /spider/i,
+    /scraper/i,
+    /curl/i,
+    /wget/i,
+    /python/i,
+    /go-http/i,
+    /java/i,
+  ];
+
+  if (botPatterns.some(pattern => pattern.test(userAgent))) {
+    console.warn('Bot User-Agent detected', { userAgent });
+    return new Response(
+      JSON.stringify({ error: 'Invalid request' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   const now = Date.now();
+  const clientIp = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
+
+  // Rate limiting - check if IP has requested too recently
+  if (KV) {
+    const rateLimitKey = `ratelimit:${clientIp}`;
+    const lastRequest = await KV.get(rateLimitKey);
+
+    if (lastRequest) {
+      const timeSinceLastRequest = now - parseInt(lastRequest);
+      if (timeSinceLastRequest < 5000) { // 5 second cooldown
+        console.warn('Rate limit exceeded', { clientIp, timeSinceLastRequest });
+        return new Response(
+          JSON.stringify({ error: 'Too many requests. Please wait a moment.' }),
+          { status: 429, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Store this request timestamp with 60 second TTL
+    await KV.put(rateLimitKey, now.toString(), { expirationTtl: 60 });
+  }
 
   // Check if UUID was passed from client
   const clientUuid = url.searchParams.get('uuid');

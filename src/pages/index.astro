@@ -571,13 +571,26 @@ try {
 			const countdownTimer = document.getElementById('countdownTimer');
 			const countdownTime = document.getElementById('countdownTime');
 			const expiredAlert = document.getElementById('expiredAlert');
+			const localhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 			const STORAGE_KEY = 'discord_invite_data';
+			const HONEYPOT_KEY = 'user_email_address'; // Honeypot storage key
 			let countdownInterval = null;
 			let currentInvite = null; // Store the current invite data
+			let honeypotValue = ''; // Honeypot trap for bots
 
 			// Check if required elements exist (they won't if unknownCommunity is true)
 			if (!joinButton || !loadingText || !countdownTimer || !countdownTime || !expiredAlert) {
 				console.warn('Required DOM elements not found - likely showing error state');
+			}
+
+			// Check honeypot on page load - bots often fill hidden fields in localStorage
+			try {
+				const storedHoneypot = localStorage.getItem(HONEYPOT_KEY);
+				if (storedHoneypot) {
+					honeypotValue = storedHoneypot;
+				}
+			} catch (e) {
+				// Ignore
 			}
 
 			// Format time remaining as MM:SS
@@ -650,9 +663,15 @@ try {
 					}
 
 					// Build API URL with UUID if available (server will handle expiry checking)
-					const apiUrl = storedData?.uuid
-						? `/api/invite?uuid=${storedData.uuid}`
-						: '/api/invite';
+					// Include honeypot parameter - legitimate users will have empty value
+					const params = new URLSearchParams();
+					if (storedData?.uuid) {
+						params.append('uuid', storedData.uuid);
+					}
+					if (honeypotValue) {
+						params.append('email', honeypotValue);
+					}
+					const apiUrl = `/api/invite${params.toString() ? '?' + params.toString() : ''}`;
 
 					console.log('Fetching invite from:', apiUrl);
 
@@ -744,8 +763,17 @@ try {
 					return;
 				}
 
+				// Add small delay to ensure legitimate users vs bots
+				// Bots typically execute immediately, real users need time to load/render
+				await new Promise(resolve => setTimeout(resolve, 500));
+
 				// Fetch the invite (this will enable the button when ready)
 				await fetchInvite();
+
+				// Auto-redirect on page load (if not localhost)
+				if(!localhost) {
+					openDiscord();
+				}
 			});
 
 			// Manual button click - opens Discord app with fallback
