@@ -715,8 +715,8 @@ try {
 					return data;
 				} catch (error) {
 					console.error('Error fetching invite:', error);
-					joinButton.disabled = false;
-					joinButton.textContent = 'Use Fallback Invite';
+					joinButton.disabled = true;
+					joinButton.textContent = 'Failed to fetch invite';
 					return null;
 				}
 			}
@@ -724,8 +724,7 @@ try {
 			// Open Discord with the current invite
 			function openDiscord() {
 				if (!loadingText || !currentInvite) {
-					console.log('No invite or elements available, using fallback');
-					window.location.href = 'https://discord.gg/strands';
+					console.log('No invite available');
 					return;
 				}
 
