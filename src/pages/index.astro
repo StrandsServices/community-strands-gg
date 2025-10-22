@@ -154,6 +154,10 @@ try {
 							@apply bg-yellow-500 text-slate-900;
 						}
 
+						&.alert-error {
+							@apply bg-red-600 text-slate-100;
+						}
+
 						@supports (corner-shape: squircle) {
 							border-radius: 30px;
 							corner-shape: squircle;
@@ -509,8 +513,8 @@ try {
 			)}
 
 			{unknownCommunity ? (
-				<div class="alert alert-warning">
-					<strong>Warning:</strong> The Discord invite code assigned to this website is invalid or has expired.
+				<div class="alert alert-error">
+					<strong>Error:</strong> The community you are trying to join is not recognized. Please ensure you have the correct invite link or contact the community administrator for assistance.
 				</div>
 			) : (
 				<div class={`invite-content ${!bannerUrl ? 'no-banner' : ''}`}>
