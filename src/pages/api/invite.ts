@@ -8,6 +8,20 @@ export const GET: APIRoute = async ({ locals, url, request }) => {
   const DISCORD_CHANNEL_ID = runtime?.env?.DISCORD_CHANNEL_ID;
   const KV = runtime?.env?.DISCORD_INVITES;
 
+  // CORS check - only allow requests from same origin
+  const origin = request.headers.get('Origin');
+  const referer = request.headers.get('Referer');
+  const allowedOrigin = url.origin;
+
+  // Block requests that have an origin/referer from a different domain
+  if ((origin && origin !== allowedOrigin) || (referer && !referer.startsWith(allowedOrigin))) {
+    console.warn('CORS violation detected', { origin, referer, allowedOrigin });
+    return new Response(
+      JSON.stringify({ error: 'Forbidden' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   if (!DISCORD_BOT_TOKEN || !DISCORD_CHANNEL_ID) {
     return new Response(
       JSON.stringify({ error: 'Missing Discord bot configuration' }),
