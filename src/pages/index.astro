@@ -769,11 +769,6 @@ try {
 
 				// Fetch the invite (this will enable the button when ready)
 				await fetchInvite();
-
-				// Auto-redirect on page load (if not localhost)
-				if(!localhost) {
-					openDiscord();
-				}
 			});
 
 			// Manual button click - opens Discord app with fallback
